@@ -22,14 +22,23 @@ def get_batch(
     # 学習データ
     log = []
     for _ in range(batch_size):
+        # len(feature) 個の乱数を生成
+        # 変更必要あり
         x = np.random.rand(len(features))
         arm_id = bandit.select_arm(x)
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
+        # if _ < batch_size /2:
+        #     reward = np.random.binomial(1, true_prob[arm_id])
+        # else:
+        #     reward = np.random.binomial(1, 1/2)
         log.append(
             {
                 "arm_id": arm_id,
+                # n=1, p=true_prob[arm_id]) の二項分布
                 "reward": np.random.binomial(1, true_prob[arm_id]),
+                # "reward": np.random.randn(),
+                # "reward": reward,
                 "regret": maxprob - true_prob[arm_id],
             }
             | dict(zip(features, x))
@@ -60,6 +69,7 @@ if __name__ == "__main__":
         print(name)
         regret_log = []
         cumsum_regret = 0
+        # episode 数
         for i in tqdm(range(100)):
             reward_df = get_batch(bandit, true_theta, features, batch_size)
             cumsum_regret += reward_df["regret"].sum()
