@@ -23,7 +23,6 @@ def swap_dict_values_cyclic(original_dict):
     values = list(original_dict.values())
     
     # サイクルシフトして値を入れ替える
-    # swapped_values = values[-1:] + values[:-1]
     tmp = values[2]
     values[2] = values[1]
     values[1] = values[0]
@@ -48,20 +47,20 @@ def get_batch(
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
 
-        # if _ < batch_size / 2:
-        #     # true_prob = swap_dict_values_cyclic(true_prob)
-        #     reward = np.random.binomial(1, true_prob[arm_id])
-        # else:
-        #     true_prob = swap_dict_values_cyclic(true_prob)
-        #     reward = np.random.binomial(1, true_prob[arm_id])
+        if _ == batch_size / 2:
+            true_prob = swap_dict_values_cyclic(true_prob)
+            reward = np.random.binomial(1, true_prob[arm_id])
+        else:
+            # true_prob = swap_dict_values_cyclic(true_prob)
+            reward = np.random.binomial(1, true_prob[arm_id])
 
         log.append(
             {
                 "arm_id": arm_id,
                 # n=1, p=true_prob[arm_id]) の二項分布
-                "reward": np.random.binomial(1, true_prob[arm_id]),
+                # "reward": np.random.binomial(1, true_prob[arm_id]),
                 # "reward": np.random.randn(),
-                # "reward": reward,
+                "reward": reward,
                 "regret": maxprob - true_prob[arm_id],
             }
             | dict(zip(features, x))
@@ -95,8 +94,8 @@ if __name__ == "__main__":
         # episode 数
         for i in tqdm(range(100)):
             # true_theta を swap
-            if i == 50:
-                true_theta = swap_dict_values_cyclic(true_theta)
+            # if i == 50:
+            #     true_theta = swap_dict_values_cyclic(true_theta)
 
             reward_df = get_batch(bandit, true_theta, features, batch_size)
             cumsum_regret += reward_df["regret"].sum()
