@@ -13,6 +13,25 @@ from bandit.logistic_pgts import LogisticPGTS
 from bandit.bandit_base.bandit import BanditBase
 
 
+def swap_dict_values_cyclic(original_dict):
+    """
+    original_dict: 値を入れ替える対象の辞書。
+    
+    入れ替えの順序: key0 → key1 → key2 → key0
+    """
+    keys = list(original_dict.keys())
+    values = list(original_dict.values())
+    
+    # サイクルシフトして値を入れ替える
+    # swapped_values = values[-1:] + values[:-1]
+    tmp = values[2]
+    values[2] = values[1]
+    values[1] = values[0]
+    values[0] = tmp
+    swapped_dict = dict(zip(keys, values))
+    return swapped_dict
+
+
 def get_batch(
     bandit: BanditBase,
     true_theta: dict[str, np.ndarray],
@@ -28,10 +47,14 @@ def get_batch(
         arm_id = bandit.select_arm(x)
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
-        # if _ < batch_size /2:
+
+        # if _ < batch_size / 2:
+        #     # true_prob = swap_dict_values_cyclic(true_prob)
         #     reward = np.random.binomial(1, true_prob[arm_id])
         # else:
-        #     reward = np.random.binomial(1, 1/2)
+        #     true_prob = swap_dict_values_cyclic(true_prob)
+        #     reward = np.random.binomial(1, true_prob[arm_id])
+
         log.append(
             {
                 "arm_id": arm_id,
@@ -63,7 +86,7 @@ if __name__ == "__main__":
         LinTS(arm_ids, features, intercept),
         LinUCB(arm_ids, features, intercept, alpha=1),
         LinUCBHybrid(arm_ids, features, intercept, alpha=1),
-        BernoulliTS(arm_ids),
+        # BernoulliTS(arm_ids),
     ]:
         name = bandit.__class__.__name__
         print(name)
@@ -71,6 +94,10 @@ if __name__ == "__main__":
         cumsum_regret = 0
         # episode 数
         for i in tqdm(range(100)):
+            # true_theta を swap
+            if i == 50:
+                true_theta = swap_dict_values_cyclic(true_theta)
+
             reward_df = get_batch(bandit, true_theta, features, batch_size)
             cumsum_regret += reward_df["regret"].sum()
             regret_log.append(cumsum_regret)
