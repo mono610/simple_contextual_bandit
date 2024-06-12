@@ -8,4 +8,4 @@ python -m contextual_binary
 ```
 
 ## 参考
-[bardwatcher さんのバンディットアルゴリズムの実装](https://github.com/birdwatcherYT/bandit/blob/main/README.md?plain=1)を参考にしました．
+bardwatcher さんの[バンディットアルゴリズムの実装](https://github.com/birdwatcherYT/bandit/blob/main/README.md?plain=1)を参考にしました．
