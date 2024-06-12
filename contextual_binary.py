@@ -47,6 +47,7 @@ def get_batch(
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
 
+        # true_prob を swap
         if _ == batch_size / 2:
             true_prob = swap_dict_values_cyclic(true_prob)
             reward = np.random.binomial(1, true_prob[arm_id])
