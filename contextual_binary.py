@@ -44,24 +44,25 @@ def get_batch(
         # 変更必要あり
         x = np.random.rand(len(features))
         arm_id = bandit.select_arm(x)
+        # 真の報酬期待値？
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
 
         # true_prob を swap
-        if _ == batch_size / 2:
-            true_prob = swap_dict_values_cyclic(true_prob)
-            reward = np.random.binomial(1, true_prob[arm_id])
-        else:
-            # true_prob = swap_dict_values_cyclic(true_prob)
-            reward = np.random.binomial(1, true_prob[arm_id])
+        # if _ == batch_size / 2:
+        #     true_prob = swap_dict_values_cyclic(true_prob)
+        #     reward = np.random.binomial(1, true_prob[arm_id])
+        # else:
+        #     # true_prob = swap_dict_values_cyclic(true_prob)
+        #     reward = np.random.binomial(1, true_prob[arm_id])
 
         log.append(
             {
                 "arm_id": arm_id,
                 # n=1, p=true_prob[arm_id]) の二項分布
-                # "reward": np.random.binomial(1, true_prob[arm_id]),
+                "reward": np.random.binomial(1, true_prob[arm_id]),
                 # "reward": np.random.randn(),
-                "reward": reward,
+                # "reward": reward,
                 "regret": maxprob - true_prob[arm_id],
             }
             | dict(zip(features, x))
@@ -70,12 +71,14 @@ def get_batch(
 
 
 if __name__ == "__main__":
-    batch_size = 100
+    batch_size = 1000
     arm_num = 3
     feature_num = 5
+    # θx + ε における ε (誤差項)
     intercept = False
     arm_ids = [f"arm{i}" for i in range(arm_num)]
     features = [f"feat{i}" for i in range(feature_num)]
+    # arm0 - arm 2 の theta(係数ベクトル): 5 次元の正規分布に従う乱数
     true_theta = {a: np.random.normal(size=feature_num) for a in arm_ids}
     print(true_theta)
 
@@ -92,11 +95,16 @@ if __name__ == "__main__":
         print(name)
         regret_log = []
         cumsum_regret = 0
-        # episode 数
-        for i in tqdm(range(100)):
+
+        # 学習回数
+        for i in tqdm(range(1000)):
             # true_theta を swap
-            # if i == 50:
-            #     true_theta = swap_dict_values_cyclic(true_theta)
+            if i == 250:
+                true_theta = swap_dict_values_cyclic(true_theta)
+            elif i == 500:
+                true_theta = swap_dict_values_cyclic(true_theta)
+            elif i == 750:
+                true_theta = swap_dict_values_cyclic(true_theta)
 
             reward_df = get_batch(bandit, true_theta, features, batch_size)
             cumsum_regret += reward_df["regret"].sum()
