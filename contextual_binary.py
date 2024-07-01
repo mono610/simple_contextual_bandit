@@ -15,7 +15,7 @@ from bandit.bandit_base.bandit import BanditBase
 
 def swap_dict_values_cyclic(original_dict):
     """
-    original_dict: 値を入れ替える対象の辞書。
+    original_dict: 値を入れ替える対象の辞書
     
     入れ替えの順序: key0 → key1 → key2 → key0
     """
@@ -36,6 +36,7 @@ def get_batch(
     true_theta: dict[str, np.ndarray],
     features: list[str],
     batch_size: int,
+    swap_prob: bool = False,
 ) -> pd.DataFrame:
     # 学習データ
     log = []
@@ -43,8 +44,9 @@ def get_batch(
         # len(feature) 個の乱数を生成
         # 変更必要あり
         x = np.random.rand(len(features))
+        # 腕の選択
         arm_id = bandit.select_arm(x)
-        # 真の報酬期待値？
+        # 報酬期待値
         true_prob = {a: expit(theta @ x) for a, theta in true_theta.items()}
         maxprob = max(true_prob.values())
 
@@ -55,6 +57,10 @@ def get_batch(
         # else:
         #     # true_prob = swap_dict_values_cyclic(true_prob)
         #     reward = np.random.binomial(1, true_prob[arm_id])
+        if swap_prob:
+            true_prob = swap_dict_values_cyclic(true_prob)
+        
+        maxprob = max(true_prob.values())
 
         log.append(
             {
@@ -71,7 +77,7 @@ def get_batch(
 
 
 if __name__ == "__main__":
-    batch_size = 1000
+    batch_size = 1
     arm_num = 3
     feature_num = 5
     # θx + ε における ε (誤差項)
@@ -97,16 +103,22 @@ if __name__ == "__main__":
         cumsum_regret = 0
 
         # 学習回数
-        for i in tqdm(range(1000)):
+        for i in tqdm(range(10000)):
             # true_theta を swap
-            if i == 250:
-                true_theta = swap_dict_values_cyclic(true_theta)
-            elif i == 500:
-                true_theta = swap_dict_values_cyclic(true_theta)
-            elif i == 750:
-                true_theta = swap_dict_values_cyclic(true_theta)
+            # if i == 250:
+            #     true_theta = swap_dict_values_cyclic(true_theta)
+            # elif i == 500:
+            #     true_theta = swap_dict_values_cyclic(true_theta)
+            # elif i == 750:
+            #     true_theta = swap_dict_values_cyclic(true_theta)
+            
+            # true_probをswapするフラグを設定
+            swap_prob = False
+            if i >= 50 :
+                swap_prob = True
 
-            reward_df = get_batch(bandit, true_theta, features, batch_size)
+            reward_df = get_batch(bandit, true_theta, features, batch_size, swap_prob=swap_prob)
+            # reward_df = get_batch(bandit, true_theta, features, batch_size)
             cumsum_regret += reward_df["regret"].sum()
             regret_log.append(cumsum_regret)
             bandit.train(reward_df)
