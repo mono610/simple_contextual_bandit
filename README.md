@@ -13,4 +13,4 @@ python -m plot
 ```
 
 ## 参考
-bardwatcher さんの[バンディットアルゴリズムの実装](https://github.com/birdwatcherYT/bandit/blob/main/README.md?plain=1)を参考にしました．
+bardwatcher さんの[バンディットアルゴリズムの実装](https://github.com/birdwatcherYT/bandit)を参考にしました．
